@@ -77,11 +77,15 @@ class Grafcet:
 class Step:
     """Step of a GRAFCET"""
 
-    def __init__(self, index, initial=False, commentary=None, apiIndex=None):
+    def __init__(self, index, initial=False, commentary=None, actions=None, apiIndex=None):
         self.index = index
         self.initial = initial
         self.apiIndex = apiIndex
         self.commentary = commentary
+        self.actions = actions
+
+        if self.actions is None:
+            self.actions = list()
 
         self.upstreamTransition = list()
         self.downstreamTransition = list()
@@ -110,6 +114,8 @@ class Step:
     def get_api_index(self):
         return self.apiIndex
 
+    def add_action(self, action):
+        self.actions.append(action)
 
 
 class Transition:
@@ -178,5 +184,43 @@ class Transition:
 
     def remove_downstream_step(self, step):
         self.downstreamSteps.remove(step)
+
+
+class Action:
+
+    def __init__(self, name, receptivity=None, outputs=None, apiIndex=None):
+        self.name = name
+        self.apiIndex = apiIndex
+        self.receptivity = receptivity
+        self.outputs = outputs
+
+        if self.outputs is None:
+            self.outputs = list()
+
+    def __str__(self):
+        return name
+
+    def __repr__(self):
+        return str(self)
+
+    def set_name(self, name):
+        self.name = name
+
+    def get_name(self):
+        return self.name
+
+    def set_api_index(self, apiIndex):
+        self.apiIndex = apiIndex
+
+    def get_api_index(self):
+        return self.apiIndex
+
+
+class ActionContinuous(Action):
+    pass
+
+
+class ActionStored(Action):
+    pass
 
 
