@@ -224,3 +224,55 @@ class ActionStored(Action):
     pass
 
 
+class Expression:
+    pass
+
+
+class ExpressionBinary(Expression):
+    pass
+
+
+class ExpressionUnary(Expression):
+    pass
+
+
+class Constant(Expression):
+    def __init__(self, value):
+        self.value = value
+
+    def __str__(self):
+        return self.value
+
+    def __repr__(self):
+        return str(self)
+
+
+class Delay(Expression):
+    pass
+
+
+class Input(Expression):
+    def __init__(self, name, apiIndex=None):
+        self.name = name
+        self.apiIndex = apiIndex
+
+    def __str__(self):
+        return self.name
+
+    def __repr__(self):
+        return str(self)
+
+    def set_name(self, name):
+        self.name = name
+
+    def get_name(self):
+        return self.name
+
+    def set_api_index(self, apiIndex):
+        self.apiIndex = apiIndex
+
+    def get_api_index(self):
+        return self.apiIndex
+
+
+
