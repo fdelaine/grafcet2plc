@@ -117,6 +117,12 @@ class Step:
     def add_action(self, action):
         self.actions.append(action)
 
+    def remove_action(self, action):
+        self.actions.remove(action)
+
+    def get_actions(self):
+        return self.actions
+
 
 class Transition:
     """Transition of a GRAFCET"""
@@ -188,17 +194,17 @@ class Transition:
 
 class Action:
 
-    def __init__(self, name, receptivity=None, outputs=None, apiIndex=None):
-        self.name = name
-        self.apiIndex = apiIndex
-        self.receptivity = receptivity
-        self.outputs = outputs
+    types = {0: "continuous", 1: "on activation", 2: "on deactivation", 3: "on event"}
 
-        if self.outputs is None:
-            self.outputs = list()
+    def __init__(self, name, type=types[0], condition=None, output=None, apiIndex=None):
+        self.name = name
+        self.type = type
+        self.condition = condition
+        self.output = output
+        self.apiIndex = apiIndex
 
     def __str__(self):
-        return name
+        return self.name
 
     def __repr__(self):
         return str(self)
@@ -209,19 +215,32 @@ class Action:
     def get_name(self):
         return self.name
 
+    def set_type(self, index):
+        self.types = Action.types[index]
+
+    def get_type(self):
+        return self.type
+
+    def set_condition(self, expression):
+        self.condition = expression
+
+    def get_condition(self):
+        return self.condition
+
+    def set_output(self, output):
+        self.output = output
+
+    def remove_output(self):
+        self.output = None
+
+    def get_output(self):
+        return self.output
+
     def set_api_index(self, apiIndex):
         self.apiIndex = apiIndex
 
     def get_api_index(self):
         return self.apiIndex
-
-
-class ActionContinuous(Action):
-    pass
-
-
-class ActionStored(Action):
-    pass
 
 
 class Expression:
