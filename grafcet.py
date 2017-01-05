@@ -16,6 +16,9 @@ class Grafcet:
         self.steps = dict()
         self.transitions = dict()
 
+        self.inputs = dict()
+        self.outputs = dict()
+
     def __str__(self):
         return 'Grafcet {}'.format(self.name)
 
@@ -73,6 +76,43 @@ class Grafcet:
 
             if (indexStep in self.steps.keys()) and (indexTransition in self.transitions.keys()):
                 self.transitions[indexTransition].add_downstream_step(self.steps[indexStep])
+
+    def preprocess_expression(self, rawExpression):
+
+        expression = list()
+        expression.append(rawExpression[0])
+        if rawExpression[0] == ('AND' or'OR'):
+            members = list()
+
+            for member in rawExpression[1]:
+                members.append(self.preprocess_expression(member))
+
+            expression.append(members)
+
+        elif rawExpression[0] == ('NOT' or 'RE' or 'FE'):
+            expression.append(self.preprocess_expression(rawExpression[1]))
+
+        elif rawExpression[0] == 'CONST':
+            expression.append(rawExpression[1])
+
+        elif rawExpression[0] == ('DE' or 'DU'):
+            subexpression = list(rawExpression[1])
+            if subexpression[1] in self.steps.keys():
+                subexpression[1] = self.steps[subexpression [1]]
+                expression.append(subexpression)
+
+        elif rawExpression[0] == 'IN':
+            if rawExpression[1] in self.inputs.keys():
+                expression.append(self.inputs[rawExpression[1]])
+
+        elif rawExpression[0] == 'OU':
+            if rawExpression[1] in self.outputs.keys():
+                expression.append(self.outputs[rawExpression[1]])
+
+        else:
+            print("unknown expression identifier")
+
+        return expression
 
 
 class Step:
