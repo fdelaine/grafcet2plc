@@ -4,6 +4,7 @@
 """grafcet.py"""
 
 import warnings
+from functools import partial
 
 
 class Grafcet:
@@ -243,19 +244,32 @@ class Action:
         return self.apiIndex
 
 
-class Expression:
-    pass
+class ExpressionBinary:
+
+    def __init__(self, type, expression):
+        self.type = type
+
+        self.members = list()
+
+        for member in expression:
+            self.members.append(Expression(member))
 
 
-class ExpressionBinary(Expression):
-    pass
+class ExpressionUnary:
+
+    def __init__(self, type, expression):
+        self.type = type
+        self.member = Expression(expression)
+
+    def __str__(self):
+        return "{} of {}".format(self.type, self.member)
+
+    def __repr__(self):
+        return str(self)
 
 
-class ExpressionUnary(Expression):
-    pass
+class Constant:
 
-
-class Constant(Expression):
     def __init__(self, value):
         self.value = value
 
@@ -266,11 +280,35 @@ class Constant(Expression):
         return str(self)
 
 
-class Delay(Expression):
-    pass
+class Delay:
+
+    def __init__(self, expression):
+        self.delay_re = expression[0]
+        self.step = expression[1]
+        self.delay_fe = expression[2]
+
+    def __str__(self):
+        return "{}/{}/{}".format(self.delay_fe, self.step, self.delay_re)
+
+    def __repr__(self):
+        return str(self)
 
 
-class Input(Expression):
+class Duration:
+
+    def __init__(self, expression):
+        self.duration = expression[0]
+        self.step = expression[1]
+
+    def __str__(self):
+        return "{}/{}".format(self.duration, self.step)
+
+    def __repr__(self):
+        return str(self)
+
+
+class Input:
+
     def __init__(self, name, apiIndex=None):
         self.name = name
         self.apiIndex = apiIndex
@@ -317,3 +355,20 @@ class Output:
 
     def get_api_index(self):
         return self.apiIndex
+
+
+class Expression:
+
+    cases = {'AND': partial(ExpressionBinary, 'AND'),
+             'OR': partial(ExpressionBinary, 'OR'),
+             'NOT': partial(ExpressionUnary, 'NOT'),
+             'RE': partial(ExpressionUnary, 'RE'),
+             'FE': partial(ExpressionUnary, 'FE'),
+             'CONST': Constant,
+             'DE': Delay,
+             'DU': Duration,
+             'IN': Input,
+             'OU': Output}
+
+    def __init__(self, expression):
+        self.expression = self.cases[expression[0]](expression[1])
