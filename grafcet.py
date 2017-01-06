@@ -237,24 +237,24 @@ class Action:
 
     types = {0: "continuous", 1: "on activation", 2: "on deactivation", 3: "on event"}
 
-    def __init__(self, name, type=types[0], condition=None, output=None, apiIndex=None):
-        self.name = name
+    def __init__(self, step, type="continuous", condition=None, output=None, apiIndex=None):
+        self.step = step
         self.type = type
         self.condition = condition
         self.output = output
         self.apiIndex = apiIndex
 
     def __str__(self):
-        return self.name
+        return self.step
 
     def __repr__(self):
         return str(self)
 
-    def set_name(self, name):
-        self.name = name
+    def set_step(self, step):
+        self.step = step
 
-    def get_name(self):
-        return self.name
+    def get_step(self):
+        return self.step
 
     def set_type(self, index):
         self.types = Action.types[index]
