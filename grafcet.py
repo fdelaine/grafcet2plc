@@ -118,10 +118,10 @@ class Grafcet:
 class Step:
     """Step of a GRAFCET"""
 
-    def __init__(self, index, initial=False, commentary=None, actions=None, apiIndex=None):
+    def __init__(self, index, initial=False, commentary=None, actions=None, plcIndex=None):
         self.index = index
         self.initial = initial
-        self.apiIndex = apiIndex
+        self.plcIndex = plcIndex
         self.commentary = commentary
         self.actions = actions
 
@@ -149,11 +149,11 @@ class Step:
     def unset_initial(self):
         self.initial = False
 
-    def set_api_index(self, apiIndex):
-        self.apiIndex = apiIndex
+    def set_plc_index(self, plcIndex):
+        self.plcIndex = plcIndex
 
-    def get_api_index(self):
-        return self.apiIndex
+    def get_plc_index(self):
+        return self.plcIndex
 
     def add_action(self, action):
         self.actions.append(action)
@@ -168,9 +168,9 @@ class Step:
 class Transition:
     """Transition of a GRAFCET"""
 
-    def __init__(self, index, condition=None, apiIndex=None):
+    def __init__(self, index, condition=None, plcIndex=None):
         self.index = index
-        self.apiIndex = apiIndex
+        self.plcIndex = plcIndex
         self.condition = condition
 
         self.upstreamSteps = list()
@@ -188,11 +188,11 @@ class Transition:
     def get_index(self):
         return self.index
 
-    def set_api_index(self, apiIndex):
-        self.apiIndex = apiIndex
+    def set_plc_index(self, plcIndex):
+        self.plcIndex = plcIndex
 
-    def get_api_index(self):
-        return self.apiIndex
+    def get_plc_index(self):
+        return self.plcIndex
 
     def add_upstream_steps(self, steps):
         for step in steps:
@@ -237,12 +237,12 @@ class Action:
 
     types = {0: "continuous", 1: "on activation", 2: "on deactivation", 3: "on event"}
 
-    def __init__(self, step, type="continuous", condition=None, output=None, apiIndex=None):
+    def __init__(self, step, type="continuous", condition=None, output=None, plcIndex=None):
         self.step = step
         self.type = type
         self.condition = condition
         self.output = output
-        self.apiIndex = apiIndex
+        self.plcIndex = plcIndex
 
     def __str__(self):
         return self.step
@@ -277,11 +277,11 @@ class Action:
     def get_output(self):
         return self.output
 
-    def set_api_index(self, apiIndex):
-        self.apiIndex = apiIndex
+    def set_plc_index(self, plcIndex):
+        self.plcIndex = plcIndex
 
-    def get_api_index(self):
-        return self.apiIndex
+    def get_plc_index(self):
+        return self.plcIndex
 
 
 class ExpressionBinary:
@@ -349,9 +349,9 @@ class Duration:
 
 class Input:
 
-    def __init__(self, name, apiIndex=None):
+    def __init__(self, name, plcIndex=None):
         self.name = name
-        self.apiIndex = apiIndex
+        self.plcIndex = plcIndex
 
     def __str__(self):
         return self.name
@@ -365,18 +365,18 @@ class Input:
     def get_name(self):
         return self.name
 
-    def set_api_index(self, apiIndex):
-        self.apiIndex = apiIndex
+    def set_plc_index(self, plcIndex):
+        self.plcIndex = plcIndex
 
-    def get_api_index(self):
-        return self.apiIndex
+    def get_plc_index(self):
+        return self.plcIndex
 
 
 class Output:
 
-    def __init__(self, name, apiIndex=None):
+    def __init__(self, name, plcIndex=None):
         self.name = name
-        self.apiIndex = apiIndex
+        self.plcIndex = plcIndex
 
     def __str__(self):
         return self.name
@@ -390,11 +390,11 @@ class Output:
     def get_name(self):
         return self.name
 
-    def set_api_index(self, apiIndex):
-        self.apiIndex = apiIndex
+    def set_plc_index(self, plcIndex):
+        self.plcIndex = plcIndex
 
-    def get_api_index(self):
-        return self.apiIndex
+    def get_plc_index(self):
+        return self.plcIndex
 
 
 class Expression:

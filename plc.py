@@ -1,14 +1,14 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-"""api.py"""
+"""plc.py"""
 
 
-class Api:
+class Plc:
     name = "None"
 
 
-class Simatic_S7_200(Api):
+class Simatic_S7_200(Plc):
 
     name = "Simatic S7-200"
 
