@@ -68,14 +68,14 @@ class Grafcet:
             indexTransition = couple[1]
 
             if (indexStep in self.steps.keys()) and (indexTransition in self.transitions.keys()):
-                self.transitions[indexTransition].add_upstream_step(self.steps[indexStep])
+                self.transitions[indexTransition].add_preceding_step(self.steps[indexStep])
 
         for couple in code[5]:
             indexTransition = couple[0]
             indexStep = couple[1]
 
             if (indexStep in self.steps.keys()) and (indexTransition in self.transitions.keys()):
-                self.transitions[indexTransition].add_downstream_step(self.steps[indexStep])
+                self.transitions[indexTransition].add_succeeding_step(self.steps[indexStep])
 
     def preprocess_expression(self, rawExpression):
 
@@ -128,8 +128,8 @@ class Step:
         if self.actions is None:
             self.actions = list()
 
-        self.upstreamTransition = list()
-        self.downstreamTransition = list()
+        self.precedingTransitions = list()
+        self.succeedingTransitions = list()
 
     def __str__(self):
         return 'X{}'.format(self.index)
@@ -164,6 +164,44 @@ class Step:
     def get_actions(self):
         return self.actions
 
+    def add_preceding_transitions(self, transitions):
+        for transition in transitions:
+            self.add_preceding_transition(transition)
+
+    def add_preceding_transition(self, transition):
+        if transition not in self.precedingTransitions:
+            self.precedingTransitions.append(transition)
+        else:
+            warnings.warn("{} already existing as preceding transition for {}".format(transition, self), UserWarning)
+
+    def get_preceding_transitions(self):
+        return self.precedingTransitions
+
+    def remove_preceding_transitions(self):
+        self.precedingTransitions.clear()
+
+    def remove_preceding_transition(self, transition):
+        self.precedingTransitions.remove(transition)
+
+    def add_succeeding_transitions(self, transitions):
+        for transition in transitions:
+            self.add_succeeding_transition(transition)
+
+    def add_succeeding_transition(self, transition):
+        if transition not in self.succeedingTransitions:
+            self.succeedingTransitions.append(transition)
+        else:
+            warnings.warn("{} already existing as succeeding transition for {}".format(transition, self), UserWarning)
+
+    def get_succeeding_transitions(self):
+        return self.succeedingTransitions
+
+    def remove_succeeding_transitions(self):
+        self.succeedingTransitions.clear()
+
+    def remove_succeeding_transition(self, transition):
+        self.succeedingTransitions.remove(transition)
+
 
 class Transition:
     """Transition of a GRAFCET"""
@@ -173,8 +211,8 @@ class Transition:
         self.plcIndex = plcIndex
         self.condition = condition
 
-        self.upstreamSteps = list()
-        self.downstreamSteps = list()
+        self.precedingSteps = list()
+        self.succeedingSteps = list()
 
     def __str__(self):
         return 'Y{}'.format(self.index)
@@ -194,43 +232,43 @@ class Transition:
     def get_plc_index(self):
         return self.plcIndex
 
-    def add_upstream_steps(self, steps):
+    def add_preceding_steps(self, steps):
         for step in steps:
-            self.add_upstream_step(step)
+            self.add_preceding_step(step)
 
-    def add_upstream_step(self, step):
-        if step not in self.upstreamSteps:
-            self.upstreamSteps.append(step)
+    def add_preceding_step(self, step):
+        if step not in self.precedingSteps:
+            self.precedingSteps.append(step)
         else:
-            warnings.warn("{} already existing as upstream step for {}".format(step, self), UserWarning)
+            warnings.warn("{} already existing as preceding step for {}".format(step, self), UserWarning)
 
-    def get_upstream_steps(self):
-        return self.upstreamSteps
+    def get_preceding_steps(self):
+        return self.precedingSteps
 
-    def remove_upstream_steps(self):
-        self.upstreamSteps.clear()
+    def remove_preceding_steps(self):
+        self.precedingSteps.clear()
 
-    def remove_upstream_step(self, step):
-        self.upstreamSteps.remove(step)
+    def remove_preceding_step(self, step):
+        self.precedingSteps.remove(step)
 
-    def add_downstream_steps(self, steps):
+    def add_succeeding_steps(self, steps):
         for step in steps:
-            self.add_downstream_step(step)
+            self.add_succeeding_step(step)
 
-    def add_downstream_step(self, step):
-        if step not in self.downstreamSteps:
-            self.downstreamSteps.append(step)
+    def add_succeeding_step(self, step):
+        if step not in self.succeedingSteps:
+            self.succeedingSteps.append(step)
         else:
-            warnings.warn("{} already existing as downstream step for {}".format(step, self), UserWarning)
+            warnings.warn("{} already existing as succeeding step for {}".format(step, self), UserWarning)
 
-    def get_downstream_steps(self):
-        return self.downstreamSteps
+    def get_succeeding_steps(self):
+        return self.succeedingSteps
 
-    def remove_downstream_steps(self):
-        self.downstreamSteps.clear()
+    def remove_succeeding_steps(self):
+        self.succeedingSteps.clear()
 
-    def remove_downstream_step(self, step):
-        self.downstreamSteps.remove(step)
+    def remove_succeeding_step(self, step):
+        self.succeedingSteps.remove(step)
 
 
 class Action:
