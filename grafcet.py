@@ -69,6 +69,7 @@ class Grafcet:
 
             if (indexStep in self.steps.keys()) and (indexTransition in self.transitions.keys()):
                 self.transitions[indexTransition].add_preceding_step(self.steps[indexStep])
+                self.steps[indexStep].add_succeeding_transition(self.transitions[indexTransition])
 
         for couple in code[5]:
             indexTransition = couple[0]
@@ -76,6 +77,7 @@ class Grafcet:
 
             if (indexStep in self.steps.keys()) and (indexTransition in self.transitions.keys()):
                 self.transitions[indexTransition].add_succeeding_step(self.steps[indexStep])
+                self.steps[indexStep].add_preceding_transition(self.transitions[indexTransition])
 
     def preprocess_expression(self, rawExpression):
 
