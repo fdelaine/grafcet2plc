@@ -151,6 +151,9 @@ class Step:
     def unset_initial(self):
         self.initial = False
 
+    def is_initial(self):
+        return self.initial
+
     def set_plc_index(self, plcIndex):
         self.plcIndex = plcIndex
 
