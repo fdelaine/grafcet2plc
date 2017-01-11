@@ -15,19 +15,20 @@ def parser_cadepa():
     input = sp.R(r'[a-zA-Z]\w*')
     output = sp.R(r'[a-zA-Z]\w*')
     time = sp.R(r'\d+\s[a-zA-Z]')
-    commentary = sp.R(r'"([a-zA-Z0-9_]|\s)*"')
-
+    commentaryText = sp.R(r'[^"]*')
 
     blanks = sp.R(r'\s+')
     sc = sp.K(';')
     bs = sp.K('\\')
     co = sp.K(',')
+    ic = sp.K('"')
 
     with sp.Separator(blanks | sc | bs | co):
 
         grafcet = sp.Rule()
         initialSteps = sp.Rule()
         step = sp.Rule()
+        commentary = sp.Rule()
         action = sp.Rule()
         transition = sp.Rule()
         condition = sp.Rule()
@@ -47,6 +48,7 @@ def parser_cadepa():
                    succedingRelation[:]
         initialSteps |= '(' & stepName[1:] & ')'
         step |= stepName & action[:1] & commentary[:1]
+        commentary |= ic & commentaryText & ic
         action |= '[' & output[1:] & ']'
         transition |= transitionName & condition[:1]
         condition |= '[' & (sum | product | atom) & ']'
