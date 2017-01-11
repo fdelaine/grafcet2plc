@@ -242,6 +242,9 @@ class Transition:
     def get_plc_index(self):
         return self.plcIndex
 
+    def get_condition(self):
+        return self.condition
+
     def add_preceding_steps(self, steps):
         for step in steps:
             self.add_preceding_step(step)
