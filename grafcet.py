@@ -381,6 +381,9 @@ class Delay:
     def __repr__(self):
         return str(self)
 
+    def get_step(self):
+        return self.step
+
 
 class Duration:
 
