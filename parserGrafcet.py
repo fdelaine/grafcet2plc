@@ -8,13 +8,18 @@ from lib import sp   # Parser SP développé par C. Delord (http://www.cdsoft.fr
 
 def parser_cadepa():
 
+    def delay_conversion(duration, timeBase):
+        timeBases = {'s': 1, 'd': 0.1, 'c': 0.01, 'z': 10}
+
+        return float(duration*timeBases[timeBase])
+
     grafcetName = sp.R('\w+')
     stepName = sp.R(r'X\d+')
     transitionName = sp.R(r'Y\d+')
     constant = sp.R(r'0|1') / (lambda lettre: ('Cte', lettre == '1'))
     input = sp.R(r'[a-zA-Z]\w*')
     output = sp.R(r'[a-zA-Z]\w*')
-    time = sp.R(r'\d+\s[a-zA-Z]')
+    time = sp.R(r'\d+\s[a-zA-Z]') / (lambda inputTime: delay_conversion(float(inputTime[:-2]), inputTime[-1]))
     commentaryText = sp.R(r'[^"]*')
 
     blanks = sp.R(r'\s+')
