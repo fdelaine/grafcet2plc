@@ -19,11 +19,16 @@ class Grafcet:
         self.inputs = dict()
         self.outputs = dict()
 
+        self.indexPlcReset = None
+
     def __str__(self):
         return 'Grafcet {}'.format(self.name)
 
     def __repr__(self):
         return str(self)
+
+    def get_plc_reset_index(self):
+        return self.indexPlcReset
 
     def add_step(self, step):
         if step not in self.steps:
