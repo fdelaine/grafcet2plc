@@ -337,6 +337,8 @@ class Action:
 
 class ExpressionBinary:
 
+    # AND, OR
+
     def __init__(self, type, expression):
         self.type = type
 
@@ -347,6 +349,8 @@ class ExpressionBinary:
 
 
 class ExpressionUnary:
+
+    # NOT, RE, FE
 
     def __init__(self, type, expression):
         self.type = type
@@ -462,7 +466,8 @@ class Expression:
              'DE': Delay,
              'DU': Duration,
              'IN': Input,
-             'OU': Output}
+             'OU': Output,
+             'ST': lambda step: step}
 
     def __init__(self, expression):
         self.expression = self.cases[expression[0]](expression[1])
