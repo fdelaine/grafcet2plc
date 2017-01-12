@@ -14,11 +14,11 @@ def parser_cadepa():
         return float(duration*timeBases[timeBase])
 
     grafcetName = sp.R('\w+')
-    stepName = sp.R(r'X\d+')
-    transitionName = sp.R(r'Y\d+')
-    constant = sp.R(r'0|1') / (lambda lettre: ('Cte', lettre == '1'))
-    input = sp.R(r'[a-zA-Z]\w*')
-    output = sp.R(r'[a-zA-Z]\w*')
+    stepName = sp.R(r'X\d+') / (lambda name: ('ST', name[1:]))
+    transitionName = sp.R(r'Y\d+') / (lambda name: ('TR', name[1:]))
+    constant = sp.R(r'0|1') / (lambda value: ('CT', int(value)))
+    input = sp.R(r'[a-zA-Z]\w*') / (lambda name: ('IN', name))
+    output = sp.R(r'[a-zA-Z]\w*') / (lambda name: ('OU', name))
     time = sp.R(r'\d+\s[a-zA-Z]') / (lambda inputTime: delay_conversion(float(inputTime[:-2]), inputTime[-1]))
     commentaryText = sp.R(r'[^"]*')
 
@@ -58,15 +58,15 @@ def parser_cadepa():
         transition |= transitionName & condition[:1]
         condition |= '[' & (sum | product | atom) & ']'
         expression |= sum | product | atom
-        sum |= (product | atom)[2::'+']
-        product |= atom[2::'.']
+        sum |= (product | atom)[2::'+'] / (lambda members: ('OR', members))
+        product |= atom[2::'.'] / (lambda members: ('AND', members))
         atom |= variable | constant | negation | delay | risingEdge | fallingEdge | ('(' & expression & ')')
-        variable |= input
-        negation |= '/' & atom
-        delay |= 'T/' & stepName & '/' & time & '/'
-        risingEdge |= '>' & (variable | negation | delay | ('(' & expression & ')'))
-        fallingEdge |= '<' & (variable | negation | delay | ('(' & expression & ')'))
-        precedingRelation |= stepName & '>' & transitionName
-        succedingRelation |= transitionName & '>' & stepName
+        variable |= input | stepName
+        negation |= '/' & atom / (lambda member: ('NOT', member))  # TODO: Negation can't be true for delay, or constant => improve
+        delay |= ('T/' & atom & '/' & time & '/') / (lambda member: ('DE', member))
+        risingEdge |= '>' & (variable | negation | delay | ('(' & expression & ')')) / (lambda member: ('RE', member))
+        fallingEdge |= '<' & (variable | negation | delay | ('(' & expression & ')')) / (lambda member: ('FE', member))
+        precedingRelation |= (stepName & '>' & transitionName) / (lambda couple: ('PR', couple))
+        succedingRelation |= (transitionName & '>' & stepName) / (lambda couple: ('SR', couple))
 
     return grafcet
