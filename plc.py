@@ -26,6 +26,7 @@ class Simatic_S7_200(Plc):
                                      self.delayTimeBases[2]: 0}
 
         self.delayCodes = dict()
+        self.delayPlcIndexes = dict()
 
     def convert_expression(self, expression):
         code = str()
@@ -35,13 +36,16 @@ class Simatic_S7_200(Plc):
         elif type(expression.expression) is ExpressionUnary:
             code += self.convert_expression_unary(expression.expression)
 
-        elif type(expression.expression) is Input or Step:
+        elif type(expression.expression) is Input:
+            code += 'LD ' + expression.expression.get_plc_index() + '\n'
+
+        elif type(expression.expression) is Step:
             code += 'LD ' + expression.expression.get_plc_index() + '\n'
 
         elif type(expression.expression) is Delay:
-            if expression.expression in self.delayCodes.keys():
-                self.delayCodes[expression.expression] = self.convert_delay(expression.expression)
-            code += 'LD ' + self.delayCodes[expression.expression] + '\n'
+            if expression.expression not in self.delayCodes.keys():
+                self.convert_delay(expression.expression)
+            code += 'LD ' + 'T' + str(self.delayPlcIndexes[expression.expression]) + '\n'
 
         elif type(expression.expression) is Constant:
             if expression.expression.value is 1:
@@ -54,7 +58,6 @@ class Simatic_S7_200(Plc):
         typeConversion = {'AND': 'ALD', 'OR': 'OLD'}
 
         for member in expression.members:
-
             code += self.convert_expression(member)
 
             if member is not expression.members[0]:
@@ -76,11 +79,9 @@ class Simatic_S7_200(Plc):
 
         return code
 
-    def convert_delay(self, delayTuple):
-        delay = delayTuple[1]
+    def convert_delay(self, delay):
 
         # TODO: add warning if delay_fe is not 0
-
         if delay.delay_re < self.delayTimeBases[0]:
             # TODO: add error
             pass
@@ -93,13 +94,14 @@ class Simatic_S7_200(Plc):
 
         # TODO: add error handler for index overflow
         duration = round(delay.delay_re / self.delayTimeBases[timeBase])
-        index = self.delayIndexes[self.delayIndexesCounters[self.delayTimeBases[timeBase]]]
-        self.delayIndexes[self.delayIndexesCounters[self.delayTimeBases[timeBase]]] += 1
+        index = self.delayIndexes[self.delayTimeBases[timeBase]][self.delayIndexesCounters[self.delayTimeBases[timeBase]]]
+        self.delayIndexesCounters[self.delayTimeBases[timeBase]] += 1
 
-        code = "LD {}\n".format(delay.step.get_plc_index())
-        code += "TON T{}, {}".format(index, duration)
+        code = "LD {}\n".format(delay.step.expression.get_plc_index())
+        code += "TON T{}, {}\n".format(index, duration)
 
-        return code
+        self.delayCodes[delay] = code
+        self.delayPlcIndexes[delay] = index
 
     def write_delays(self):
         code = str()
@@ -112,10 +114,10 @@ class Simatic_S7_200(Plc):
 
     def convert_step(self, step):
         self.networkCounter += 1
-        code = "Network {} // Step {}\n".format(self.networkCounter, step.get_index())
+        code = "Network {} // Step {}\n".format(self.networkCounter, step)
 
         precedingTransitions = step.get_preceding_transitions()
-        succeedingTransitions = step.get_succeding_transitions()
+        succeedingTransitions = step.get_succeeding_transitions()
 
         code += "LD {}\n".format(precedingTransitions[0].get_plc_index())
         for transition in precedingTransitions[1:]:
@@ -130,29 +132,26 @@ class Simatic_S7_200(Plc):
         for transition in succeedingTransitions[1:]:
             code += "O {}\n".format(transition.get_plc_index())
 
-        code += "ON {}".format(self.plcResetIndex)
+        code += "ON {}\n".format(self.plcResetIndex)
 
-        code += """NOT
-        A {}
-        OLD
-        = {}""".format(step.get_plc_index(), step.get_plc_index())
+        code += "NOT\nA {}\nOLD\n= {}\n".format(step.get_plc_index(), step.get_plc_index())
 
         return code
 
     def convert_transition(self, transition):
         self.networkCounter += 1
-        code = "Network {} // Transition {}\n".format(self.networkCounter, transition.get_name())
+        code = "Network {} // Transition {}\n".format(self.networkCounter, transition)
 
         steps = transition.get_preceding_steps()
-        code += "LD {}".format(steps[0].get_plc_index())
+        code += "LD {}\n".format(steps[0].get_plc_index())
 
-        for step in steps:
-            code += "A {}".format(step.get_plc_index())
+        for step in steps[1:]:
+            code += "A {}\n".format(step.get_plc_index())
 
         code += self.convert_expression(transition.get_condition())
 
-        code += "ALD"
-        code += "= {}".format(transition.get_plc_index())
+        code += "ALD\n"
+        code += "= {}\n".format(transition.get_plc_index())
 
         return code
 
@@ -182,6 +181,31 @@ class Simatic_S7_200(Plc):
         return code
 
     def get_code(self, grafcet):
-        code = str()
+        code = "SUBROUTINE_BLOCK Mode_Auto:SBR0\n"
+        code += "TITLE=COMMENTAIRES DE SOUS-PROGRAMME\n"
+        code += "BEGIN\n"
+
+        transitions = grafcet.get_transitions()
+
+        for key in transitions:
+            transition = transitions[key]
+
+            code += self.convert_transition(transition)
+
+        steps = grafcet.get_steps()
+
+        for key in steps:
+            step = steps[key]
+            code += self.convert_step(step)
+
+        outputs = grafcet.get_outputs()
+
+        for key in outputs:
+            output = outputs[key]
+            code += self.convert_output(output)
+
+        code += self.write_delays()
+
+        code += "END_SUBROUTINE_BLOCK\n"
 
         return code

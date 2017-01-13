@@ -65,7 +65,7 @@ def parser_cadepa():
         atom |= variable | constant | negation | delay | risingEdge | fallingEdge | ('(' & expression & ')')
         variable |= input | stepName
         negation |= '/' & atom / (lambda member: ('NOT', member))  # TODO: Negation can't be true for delay, or constant => improve
-        delay |= ('T/' & atom & '/' & time & '/') / (lambda member: ('DE', member))
+        delay |= ('T/' & atom & '/' & time & '/') / (lambda member: ('DE', [member[1], member[0]]))
         risingEdge |= '>' & (variable | negation | delay | ('(' & expression & ')')) / (lambda member: ('RE', member))
         fallingEdge |= '<' & (variable | negation | delay | ('(' & expression & ')')) / (lambda member: ('FE', member))
         precedingRelation |= (stepName & '>' & transitionName) / (lambda couple: ('PR', couple))
