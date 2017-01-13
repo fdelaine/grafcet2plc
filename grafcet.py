@@ -53,42 +53,65 @@ class Grafcet:
     def check_consistency(self):
         pass
 
-    def generate(self):
-        code = ('myGrafcet', [1], (1, 2, 3), (4, 5, 6), [(1, 4), (2, 5), (3, 6)], [(4, 2), (4, 3), (5, 1), (6, 1)])
+    def generate(self, code):
 
         self.name = code[0]
-        for index in code[2]:
-            step = Step(index)
-            if index in code[1]:
+        for rawStep in code[2]:
+            step = Step(rawStep[0][1], commentary=rawStep[2])
+            if rawStep[0] in code[1]:
                 step.set_initial()
 
             self.add_step(step)
 
-        for index in code[3]:
-            transition = Transition(index)
+        for rawTransition in code[3]:
+            transition = Transition(rawTransition[0][1])
             self.add_transition(transition)
 
-        for couple in code[4]:
-            indexStep = couple[0]
-            indexTransition = couple[1]
+        for precedingRelation in code[4]:
+            couple = precedingRelation[1]
+            indexStep = couple[0][1]
+            indexTransition = couple[1][1]
 
             if (indexStep in self.steps.keys()) and (indexTransition in self.transitions.keys()):
                 self.transitions[indexTransition].add_preceding_step(self.steps[indexStep])
                 self.steps[indexStep].add_succeeding_transition(self.transitions[indexTransition])
 
-        for couple in code[5]:
-            indexTransition = couple[0]
-            indexStep = couple[1]
+        for succeedingRelation in code[5]:
+            couple = succeedingRelation[1]
+            indexTransition = couple[0][1]
+            indexStep = couple[1][1]
 
             if (indexStep in self.steps.keys()) and (indexTransition in self.transitions.keys()):
                 self.transitions[indexTransition].add_succeeding_step(self.steps[indexStep])
                 self.steps[indexStep].add_preceding_transition(self.transitions[indexTransition])
 
-    def preprocess_expression(self, rawExpression):
+        for rawStep in code[2]:
+            for rawAction in rawStep[1]:
+                self.steps[rawStep[0][1]].add_action(self.process_action(rawAction))
 
+        for rawTransition in code[3]:
+            if len(rawTransition[1]) == 0:
+                rawTransition[1].append(('CT', 1))
+            self.transitions[rawTransition[0][1]].set_condition(self.process_expression(rawTransition[1][0]))
+
+    def process_action(self, rawAction):
+        action = Action()
+        if rawAction[0][0] == 'OU':
+            if rawAction[0][1] not in self.outputs.keys():
+                self.outputs[rawAction[0][1]] = Output(rawAction[0][1])
+            action.set_output(self.outputs[rawAction[0][1]])
+
+        # TODO: improve to include other actions properties
+
+        return action
+
+    def process_expression(self, rawExpression):
+        return Expression(self.preprocess_expression(rawExpression))
+
+    def preprocess_expression(self, rawExpression):
         expression = list()
         expression.append(rawExpression[0])
-        if rawExpression[0] == ('AND' or'OR'):
+        if rawExpression[0] == 'AND' or rawExpression[0] == 'OR':
             members = list()
 
             for member in rawExpression[1]:
@@ -99,22 +122,31 @@ class Grafcet:
         elif rawExpression[0] == ('NOT' or 'RE' or 'FE'):
             expression.append(self.preprocess_expression(rawExpression[1]))
 
-        elif rawExpression[0] == 'CONST':
+        elif rawExpression[0] == 'CT':
             expression.append(rawExpression[1])
 
         elif rawExpression[0] == ('DE' or 'DU'):
             subexpression = list(rawExpression[1])
-            if subexpression[1] in self.steps.keys():
-                subexpression[1] = self.steps[subexpression [1]]
-                expression.append(subexpression)
+            subexpression[0] = self.preprocess_expression(subexpression[0])
+            subexpression.append(0)
+            expression.append(subexpression)
+            # TODO: add other cases
 
         elif rawExpression[0] == 'IN':
-            if rawExpression[1] in self.inputs.keys():
-                expression.append(self.inputs[rawExpression[1]])
+            if rawExpression[1] not in self.inputs.keys():
+                self.inputs[rawExpression[1]] = Input(rawExpression[1])
+
+            expression.append(self.inputs[rawExpression[1]])
 
         elif rawExpression[0] == 'OU':
-            if rawExpression[1] in self.outputs.keys():
-                expression.append(self.outputs[rawExpression[1]])
+            if rawExpression[1] not in self.outputs.keys():
+                self.outputs[rawExpression[1]] = Output(rawExpression[1])
+            expression.append(self.outputs[rawExpression[1]])
+
+        elif rawExpression[0] == 'ST':
+            if rawExpression[1] not in self.steps.keys():
+                self.steps[rawExpression[1]] = Step(rawExpression[1])
+            expression.append(self.steps[rawExpression[1]])
 
         else:
             print("unknown expression identifier")
@@ -166,6 +198,7 @@ class Step:
         return self.plcIndex
 
     def add_action(self, action):
+        action.set_step(self)
         self.actions.append(action)
 
     def remove_action(self, action):
@@ -242,6 +275,9 @@ class Transition:
     def get_plc_index(self):
         return self.plcIndex
 
+    def set_condition(self, condition):
+        self.condition = condition
+
     def get_condition(self):
         return self.condition
 
@@ -288,7 +324,7 @@ class Action:
 
     types = {0: "continuous", 1: "on activation", 2: "on deactivation", 3: "on event"}
 
-    def __init__(self, step, type="continuous", condition=None, output=None, plcIndex=None):
+    def __init__(self, step=None, type="continuous", condition=None, output=None, plcIndex=None):
         self.step = step
         self.type = type
         self.condition = condition
@@ -462,7 +498,7 @@ class Expression:
              'NOT': partial(ExpressionUnary, 'NOT'),
              'RE': partial(ExpressionUnary, 'RE'),
              'FE': partial(ExpressionUnary, 'FE'),
-             'CONST': Constant,
+             'CT': Constant,
              'DE': Delay,
              'DU': Duration,
              'IN': Input,
