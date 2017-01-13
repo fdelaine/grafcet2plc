@@ -39,6 +39,8 @@ class Simatic_S7_200(Plc):
             code += 'LD ' + expression.expression.get_plc_index() + '\n'
 
         elif type(expression.expression) is Delay:
+            if expression.expression in self.delayCodes.keys():
+                self.delayCodes[expression.expression] = self.convert_delay(expression.expression)
             code += 'LD ' + self.delayCodes[expression.expression] + '\n'
 
         elif type(expression.expression) is Constant:
@@ -74,9 +76,8 @@ class Simatic_S7_200(Plc):
 
         return code
 
-    def convert_delay(self, delay):
-        self.networkCounter += 1
-        code = "Network {} // Delay \n".format(self.networkCounter)
+    def convert_delay(self, delayTuple):
+        delay = delayTuple[1]
 
         # TODO: add warning if delay_fe is not 0
 
@@ -95,10 +96,17 @@ class Simatic_S7_200(Plc):
         index = self.delayIndexes[self.delayIndexesCounters[self.delayTimeBases[timeBase]]]
         self.delayIndexes[self.delayIndexesCounters[self.delayTimeBases[timeBase]]] += 1
 
-        code += "LD {}\n".format(delay.step)
+        code = "LD {}\n".format(delay.step.get_plc_index())
         code += "TON T{}, {}".format(index, duration)
 
-        self.delayCodes[delay] = code
+        return code
+
+    def write_delays(self):
+        code = str()
+        for key in self.delayCodes:
+            self.networkCounter += 1
+            code += "Network {} // Delay \n".format(self.networkCounter)
+            code += self.delayCodes[key]
 
         return code
 
