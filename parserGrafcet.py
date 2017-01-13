@@ -17,8 +17,8 @@ def parser_cadepa():
     stepName = sp.R(r'X\d+') / (lambda name: ('ST', name[1:]))
     transitionName = sp.R(r'Y\d+') / (lambda name: ('TR', name[1:]))
     constant = sp.R(r'0|1') / (lambda value: ('CT', int(value)))
-    input = sp.R(r'[a-zA-Z]\w*') / (lambda name: ('IN', name))
-    output = sp.R(r'[a-zA-Z]\w*') / (lambda name: ('OU', name))
+    input = sp.R(r'[a-zA-WZ]\w*') / (lambda name: ('IN', name))
+    output = sp.R(r'[a-zA-WZ]\w*') / (lambda name: ('OU', name))
     time = sp.R(r'\d+\s[a-zA-Z]') / (lambda inputTime: delay_conversion(float(inputTime[:-2]), inputTime[-1]))
     commentaryText = sp.R(r'[^"]*')
 
@@ -34,6 +34,7 @@ def parser_cadepa():
         initialSteps = sp.Rule()
         step = sp.Rule()
         commentary = sp.Rule()
+        actions = sp.Rule()
         action = sp.Rule()
         transition = sp.Rule()
         condition = sp.Rule()
@@ -52,9 +53,10 @@ def parser_cadepa():
         grafcet |= '%' & grafcetName & initialSteps & step[:] & transition[:] & precedingRelation[:] & \
                    succedingRelation[:]
         initialSteps |= '(' & stepName[1:] & ')'
-        step |= stepName & action[:1] & commentary[:1]
+        step |= stepName & actions[:1] & commentary[:1]
         commentary |= ic & commentaryText & ic
-        action |= '[' & output[1:] & ']'
+        actions |= '[' & action[:] & ']'
+        action |= output
         transition |= transitionName & condition[:1]
         condition |= '[' & (sum | product | atom) & ']'
         expression |= sum | product | atom
