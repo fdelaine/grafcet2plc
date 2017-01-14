@@ -181,6 +181,8 @@ class Simatic_S7_200(Plc):
         return code
 
     def get_code(self, grafcet):
+        self.plcResetIndex = grafcet.get_plc_reset().get_plc_index()
+
         code = "SUBROUTINE_BLOCK Mode_Auto:SBR0\n"
         code += "TITLE=COMMENTAIRES DE SOUS-PROGRAMME\n"
         code += "BEGIN\n"

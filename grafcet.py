@@ -20,7 +20,7 @@ class Grafcet:
         self.inputs = dict()
         self.outputs = dict()
 
-        self.indexPlcReset = None
+        self.plcReset = None
 
     def __str__(self):
         return 'Grafcet {}'.format(self.name)
@@ -28,8 +28,8 @@ class Grafcet:
     def __repr__(self):
         return str(self)
 
-    def get_plc_reset_index(self):
-        return self.indexPlcReset
+    def get_plc_reset(self):
+        return self.plcReset
 
     def get_steps(self):
         return self.steps
@@ -201,6 +201,13 @@ class Grafcet:
                     self.transitions[transition.get_index()] = transition
                 else:
                     self.transitions[row[0][1:]].set_plc_index(row[1])
+
+        with open('var/plcReset.csv', newline='') as csvfile:
+            content = csv.reader(csvfile, delimiter=';', quotechar='"')
+            for row in content:
+                if row[0][1:] not in self.transitions.keys():
+                    input = Input(row[0], row[1])
+                    self.plcReset = input
 
 
 class Step:
