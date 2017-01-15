@@ -28,11 +28,11 @@ class Grafcet:
     def __repr__(self):
         return str(self)
 
+    def set_plc_reset(self, plcReset):
+        self.plcReset = plcReset
+
     def get_plc_reset(self):
         return self.plcReset
-
-    def get_steps(self):
-        return self.steps
 
     def add_step(self, step):
         if step not in self.steps:
@@ -44,8 +44,8 @@ class Grafcet:
         self.steps.pop(step.get_index())
         del step
 
-    def get_transitions(self):
-        return self.transitions
+    def get_steps(self):
+        return self.steps
 
     def add_transition(self, transition):
         if transition not in self.transitions:
@@ -57,16 +57,20 @@ class Grafcet:
         self.transitions.pop(transition.get_index())
         del transition
 
+    def get_transitions(self):
+        return self.transitions
+
     def check_consistency(self):
         pass
 
     def generate(self, code):
 
         self.name = code[0]
+
         for rawStep in code[2]:
             step = Step(rawStep[0][1], commentary=rawStep[2])
             if rawStep[0] in code[1]:
-                step.set_initial()
+                step.set_initial(True)
 
             self.add_step(step)
 
@@ -216,9 +220,9 @@ class Step:
     def __init__(self, index, initial=False, commentary=None, actions=None, plcIndex=None):
         self.index = index
         self.initial = initial
-        self.plcIndex = plcIndex
         self.commentary = commentary
         self.actions = actions
+        self.plcIndex = plcIndex
 
         if self.actions is None:
             self.actions = list()
@@ -227,7 +231,7 @@ class Step:
         self.succeedingTransitions = list()
 
     def __str__(self):
-        return "X{}, {}".format(self.index, self.plcIndex)
+        return "Step {}".format(self.index)
 
     def __repr__(self):
         return str(self)
@@ -238,11 +242,8 @@ class Step:
     def get_index(self):
         return self.index
 
-    def set_initial(self):
-        self.initial = True
-
-    def unset_initial(self):
-        self.initial = False
+    def set_initial(self, initial):
+        self.initial = initial
 
     def is_initial(self):
         return self.initial
@@ -273,14 +274,14 @@ class Step:
         else:
             warnings.warn("{} already existing as preceding transition for {}".format(transition, self), UserWarning)
 
-    def get_preceding_transitions(self):
-        return self.precedingTransitions
-
     def remove_preceding_transitions(self):
         self.precedingTransitions.clear()
 
     def remove_preceding_transition(self, transition):
         self.precedingTransitions.remove(transition)
+
+    def get_preceding_transitions(self):
+        return self.precedingTransitions
 
     def add_succeeding_transitions(self, transitions):
         for transition in transitions:
@@ -292,14 +293,14 @@ class Step:
         else:
             warnings.warn("{} already existing as succeeding transition for {}".format(transition, self), UserWarning)
 
-    def get_succeeding_transitions(self):
-        return self.succeedingTransitions
-
     def remove_succeeding_transitions(self):
         self.succeedingTransitions.clear()
 
     def remove_succeeding_transition(self, transition):
         self.succeedingTransitions.remove(transition)
+
+    def get_succeeding_transitions(self):
+        return self.succeedingTransitions
 
 
 class Transition:
@@ -307,14 +308,14 @@ class Transition:
 
     def __init__(self, index, condition=None, plcIndex=None):
         self.index = index
-        self.plcIndex = plcIndex
         self.condition = condition
+        self.plcIndex = plcIndex
 
         self.precedingSteps = list()
         self.succeedingSteps = list()
 
     def __str__(self):
-        return "Y{}, {}".format(self.index, self.plcIndex)
+        return "Transition {}".format(self.index)
 
     def __repr__(self):
         return str(self)
@@ -347,14 +348,14 @@ class Transition:
         else:
             warnings.warn("{} already existing as preceding step for {}".format(step, self), UserWarning)
 
-    def get_preceding_steps(self):
-        return self.precedingSteps
-
     def remove_preceding_steps(self):
         self.precedingSteps.clear()
 
     def remove_preceding_step(self, step):
         self.precedingSteps.remove(step)
+
+    def get_preceding_steps(self):
+        return self.precedingSteps
 
     def add_succeeding_steps(self, steps):
         for step in steps:
@@ -366,29 +367,29 @@ class Transition:
         else:
             warnings.warn("{} already existing as succeeding step for {}".format(step, self), UserWarning)
 
-    def get_succeeding_steps(self):
-        return self.succeedingSteps
-
     def remove_succeeding_steps(self):
         self.succeedingSteps.clear()
 
     def remove_succeeding_step(self, step):
         self.succeedingSteps.remove(step)
 
+    def get_succeeding_steps(self):
+        return self.succeedingSteps
+
 
 class Action:
 
     types = {0: "continuous", 1: "on activation", 2: "on deactivation", 3: "on event"}
 
-    def __init__(self, step=None, type="continuous", condition=None, output=None, plcIndex=None):
+    def __init__(self, step=None, typeIndex=0, condition=None, output=None, plcIndex=None):
         self.step = step
-        self.type = type
+        self.type = self.types[typeIndex]
         self.condition = condition
         self.output = output
         self.plcIndex = plcIndex
 
     def __str__(self):
-        return str(self.step)
+        return "Action {} of {} in {}".format(self.type, self.type, self.step)
 
     def __repr__(self):
         return str(self)
@@ -436,8 +437,40 @@ class ExpressionBinary:
 
         self.members = list()
 
-        for member in expression:
-            self.members.append(Expression(member))
+        # TODO: What if expression is already a list of members?
+        self.add_members(expression)
+
+    def __str__(self):
+        expression = "("
+        for member in self.members:
+            expression += str(member)
+            if self.type is 'OR':
+                expression += '+'
+            elif self.type is 'AND':
+                expression += '.'
+
+        expression[-1] = ")"
+
+        return expression
+
+    def __repr__(self):
+        return str(self)
+
+    def set_type(self, type):
+        self.type = type
+
+    def get_type(self):
+        return self.type
+
+    def add_member(self, member):
+        self.members.append(Expression(member))
+
+    def add_members(self, members):
+        for member in members:
+            self.add_member(member)
+
+    def get_members(self):
+        return self.members
 
 
 class ExpressionUnary:
@@ -449,10 +482,22 @@ class ExpressionUnary:
         self.member = Expression(expression)
 
     def __str__(self):
-        return "{} of {}".format(self.type, self.member)
+        return '({} {})'.format(self.type, self.member)
 
     def __repr__(self):
         return str(self)
+
+    def set_type(self, type):
+        self.type = type
+
+    def get_type(self):
+        return self.type
+
+    def add_member(self, member):
+        self.member = Expression(member)
+
+    def get_member(self):
+        return self.member
 
 
 class Constant:
@@ -466,35 +511,68 @@ class Constant:
     def __repr__(self):
         return str(self)
 
+    def set_value(self, value):
+        self.value = value
+
+    def get_value(self):
+        return self.value
+
 
 class Delay:
 
     def __init__(self, expression):
         self.delay_re = expression[0]
-        self.step = Expression(expression[1])
+        self.expression = Expression(expression[1])
         self.delay_fe = expression[2]
 
     def __str__(self):
-        return "{}/{}/{}".format(self.delay_fe, self.step, self.delay_re)
+        return "{}s/{}/{}s".format(self.delay_fe, self.expression, self.delay_re)
 
     def __repr__(self):
         return str(self)
 
-    def get_step(self):
-        return self.step
+    def set_expression(self, expression):
+        self.expression = expression
+
+    def get_expression(self):
+        return self.expression
+
+    def set_delay_re(self, delay_re):
+        self.delay_re = delay_re
+
+    def get_delay_re(self):
+        return self.delay_re
+
+    def set_delay_fe(self, delay_fe):
+        self.delay_fe = delay_fe
+
+    def get_delay_fe(self):
+        return self.delay_fe
 
 
 class Duration:
 
     def __init__(self, expression):
         self.duration = expression[0]
-        self.step = expression[1]
+        self.expression = Expression(expression[1])
 
     def __str__(self):
-        return "{}/{}".format(self.duration, self.step)
+        return "{}s/{}".format(self.duration, self.expression)
 
     def __repr__(self):
         return str(self)
+
+    def set_expression(self, expression):
+        self.expression = expression
+
+    def get_expression(self):
+        return self.expression
+
+    def set_duration(self, duration):
+        self.duration = duration
+
+    def get_duration(self):
+        return self.duration
 
 
 class Input:
@@ -504,7 +582,7 @@ class Input:
         self.plcIndex = plcIndex
 
     def __str__(self):
-        return "{}, {}".format(self.name, self.plcIndex)
+        return "Input {} of PLC index {}".format(self.name, self.plcIndex)
 
     def __repr__(self):
         return str(self)
@@ -530,7 +608,7 @@ class Output:
         self.actions = list()
 
     def __str__(self):
-        return "{}, {}".format(self.name, self.plcIndex)
+        return "Output {} of PLC index {}".format(self.name, self.plcIndex)
 
     def __repr__(self):
         return str(self)
@@ -568,5 +646,20 @@ class Expression:
              'OU': lambda output: output,
              'ST': lambda step: step}
 
-    def __init__(self, expression):
+    def __init__(self, expression=None):
+        if expression is not None:
+            self.expression = self.cases[expression[0]](expression[1])
+        else:
+            self.expression = None
+
+    def __str__(self):
+        return "Expression {}".format(self.expression)
+
+    def __repr__(self):
+        return str(self)
+
+    def set_expression(self, expression):
         self.expression = self.cases[expression[0]](expression[1])
+
+    def get_expression(self):
+        return self.expression

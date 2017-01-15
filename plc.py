@@ -30,26 +30,29 @@ class Simatic_S7_200(Plc):
 
     def convert_expression(self, expression):
         code = str()
-        if type(expression.expression) is ExpressionBinary:
-            code += self.convert_expression_binary(expression.expression)
 
-        elif type(expression.expression) is ExpressionUnary:
-            code += self.convert_expression_unary(expression.expression)
+        expression = expression.get_expression()
 
-        elif type(expression.expression) is Input:
-            code += 'LD ' + expression.expression.get_plc_index() + '\n'
+        if type(expression) is ExpressionBinary:
+            code += self.convert_expression_binary(expression)
 
-        elif type(expression.expression) is Step:
-            code += 'LD ' + expression.expression.get_plc_index() + '\n'
+        elif type(expression) is ExpressionUnary:
+            code += self.convert_expression_unary(expression)
 
-        elif type(expression.expression) is Delay:
-            if expression.expression not in self.delayCodes.keys():
-                self.convert_delay(expression.expression)
-            code += 'LD ' + 'T' + str(self.delayPlcIndexes[expression.expression]) + '\n'
+        elif type(expression) is Input:
+            code += 'LD ' + expression.get_plc_index() + '\n'
 
-        elif type(expression.expression) is Constant:
-            if expression.expression.value is 1:
-                pass
+        elif type(expression) is Step:
+            code += 'LD ' + expression.get_plc_index() + '\n'
+
+        elif type(expression) is Delay:
+            if expression not in self.delayCodes.keys():
+                self.convert_delay(expression)
+            code += 'LD ' + 'T' + str(self.delayPlcIndexes[expression]) + '\n'
+
+        elif type(expression) is Constant:
+            if expression.get_value() is 1:
+                pass  # TODO: Manage values
 
         return code
 
@@ -57,47 +60,54 @@ class Simatic_S7_200(Plc):
         code = str()
         typeConversion = {'AND': 'ALD', 'OR': 'OLD'}
 
-        for member in expression.members:
+        type = typeConversion[expression.get_type()]
+        members = expression.get_members()
+
+        for member in members:
             code += self.convert_expression(member)
 
-            if member is not expression.members[0]:
-                code += typeConversion[expression.type] + '\n'
+            if member is not members[0]:
+                code += type + '\n'
 
         return code
 
     def convert_expression_unary(self, expression):
-        code = self.convert_expression(expression.member)
+        code = self.convert_expression(expression.get_member())
 
-        if expression.type == 'NOT':
+        type = expression.get_type()
+
+        if type == 'NOT':
             code += 'NOT\n'
 
-        elif expression.type == 'RE':
+        elif type == 'RE':
             code += 'EU\n'
 
-        elif expression.type == 'FE':
+        elif type == 'FE':
             code += 'ED\n'
 
         return code
 
     def convert_delay(self, delay):
 
+        delay_re = delay.get_delay_re()
+
         # TODO: add warning if delay_fe is not 0
-        if delay.delay_re < self.delayTimeBases[0]:
+        if delay_re < self.delayTimeBases[0]:
             # TODO: add error
             pass
-        elif delay.delay_re < self.delayTimeBases[1]:
+        elif delay_re < self.delayTimeBases[1]:
             timeBase = 0
-        elif delay.delay_re < self.delayTimeBases[2]:
+        elif delay_re < self.delayTimeBases[2]:
             timeBase = 1
         else:
             timeBase = 2
 
         # TODO: add error handler for index overflow
-        duration = round(delay.delay_re / self.delayTimeBases[timeBase])
+        duration = round(delay_re / self.delayTimeBases[timeBase])
         index = self.delayIndexes[self.delayTimeBases[timeBase]][self.delayIndexesCounters[self.delayTimeBases[timeBase]]]
         self.delayIndexesCounters[self.delayTimeBases[timeBase]] += 1
 
-        code = "LD {}\n".format(delay.step.expression.get_plc_index())
+        code = self.convert_expression(delay.get_expression())
         code += "TON T{}, {}\n".format(index, duration)
 
         self.delayCodes[delay] = code
@@ -114,7 +124,7 @@ class Simatic_S7_200(Plc):
 
     def convert_step(self, step):
         self.networkCounter += 1
-        code = "Network {} // Step {}\n".format(self.networkCounter, step)
+        code = "Network {} // {}\n".format(self.networkCounter, step)
 
         precedingTransitions = step.get_preceding_transitions()
         succeedingTransitions = step.get_succeeding_transitions()
@@ -140,7 +150,7 @@ class Simatic_S7_200(Plc):
 
     def convert_transition(self, transition):
         self.networkCounter += 1
-        code = "Network {} // Transition {}\n".format(self.networkCounter, transition)
+        code = "Network {} // {}\n".format(self.networkCounter, transition)
 
         steps = transition.get_preceding_steps()
         code += "LD {}\n".format(steps[0].get_plc_index())
@@ -157,7 +167,7 @@ class Simatic_S7_200(Plc):
 
     def convert_output(self, output):
         self.networkCounter += 1
-        code = "Network {} // Output {}\n".format(self.networkCounter, output.get_name())
+        code = "Network {} // {}\n".format(self.networkCounter, output.get_name())
 
         actions = output.get_actions()
 
