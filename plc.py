@@ -191,33 +191,75 @@ class Simatic_S7_200(Plc):
         return code
 
     def get_code(self, grafcet):
-        self.plcResetIndex = grafcet.get_plc_reset().get_plc_index()
+        if grafcet.check_consistency() and self.check_grafcet_plc_indexes(grafcet):
+            self.plcResetIndex = grafcet.get_plc_reset().get_plc_index()
 
-        code = "SUBROUTINE_BLOCK Mode_Auto:SBR0\n"
-        code += "TITLE=COMMENTAIRES DE SOUS-PROGRAMME\n"
-        code += "BEGIN\n"
+            code = "SUBROUTINE_BLOCK Mode_Auto:SBR0\n"
+            code += "TITLE=COMMENTAIRES DE SOUS-PROGRAMME\n"
+            code += "BEGIN\n"
 
-        transitions = grafcet.get_transitions()
+            transitions = grafcet.get_transitions()
 
-        for key in transitions:
-            transition = transitions[key]
+            for key in transitions:
+                transition = transitions[key]
 
-            code += self.convert_transition(transition)
+                code += self.convert_transition(transition)
+
+            steps = grafcet.get_steps()
+
+            for key in steps:
+                step = steps[key]
+                code += self.convert_step(step)
+
+            outputs = grafcet.get_outputs()
+
+            for key in outputs:
+                output = outputs[key]
+                code += self.convert_output(output)
+
+            code += self.write_delays()
+
+            code += "END_SUBROUTINE_BLOCK\n"
+
+            code = self.simplify_code(code)
+
+            return code
+        else:
+            return None
+
+    def check_grafcet_plc_indexes(self, grafcet):
 
         steps = grafcet.get_steps()
-
-        for key in steps:
-            step = steps[key]
-            code += self.convert_step(step)
-
+        transitions = grafcet.get_transitions()
+        inputs = grafcet.get_inputs()
         outputs = grafcet.get_outputs()
 
-        for key in outputs:
-            output = outputs[key]
-            code += self.convert_output(output)
+        if grafcet.get_plc_reset() is None:
+            return False
+        elif grafcet.get_plc_reset().get_plc_index() is None:
+            return False
 
-        code += self.write_delays()
+        for step in steps:
+            if step.get_plc_index() is None:
+                # TODO: add error handler
+                return False
 
-        code += "END_SUBROUTINE_BLOCK\n"
+        for transition in transitions:
+            if transition.get_plc_index() is None:
+                return False
+
+        for input in inputs:
+            if input.get_plc_index() is None:
+                return False
+
+        for output in outputs:
+            if output.get_plc_index() is None:
+                return False
+
+        return True
+
+    def simplify_code(self, code):
+
+        # TODO: to implement
 
         return code

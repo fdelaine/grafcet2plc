@@ -61,7 +61,10 @@ class Grafcet:
         return self.transitions
 
     def check_consistency(self):
-        pass
+
+        # TODO: to implement
+
+        return True
 
     def generate(self, code):
 
