@@ -127,13 +127,13 @@ class Grafcet:
 
             expression.append(members)
 
-        elif rawExpression[0] == ('NOT' or 'RE' or 'FE'):
+        elif rawExpression[0] == 'NOT' or rawExpression[0] == 'RE' or rawExpression[0] == 'FE':
             expression.append(self.preprocess_expression(rawExpression[1]))
 
         elif rawExpression[0] == 'CT':
             expression.append(rawExpression[1])
 
-        elif rawExpression[0] == ('DE' or 'DU'):
+        elif rawExpression[0] == 'DE' or rawExpression[0] == 'DU':
             subexpression = [rawExpression[1][0]]
             subexpression.append(self.preprocess_expression(rawExpression[1][1]))
             subexpression.append(0)
