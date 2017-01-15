@@ -165,6 +165,9 @@ class Grafcet:
 
         return expression
 
+    def get_inputs(self):
+        return self.inputs
+
     def get_outputs(self):
         return self.outputs
 
