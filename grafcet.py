@@ -35,7 +35,7 @@ class Grafcet:
         return self.plcReset
 
     def add_step(self, step):
-        if step not in self.steps:
+        if step.get_index() not in self.steps:
             self.steps[step.get_index()] = step
         else:
             warnings.warn("{} already existing as step for {}".format(step, self), UserWarning)
@@ -48,7 +48,7 @@ class Grafcet:
         return self.steps
 
     def add_transition(self, transition):
-        if transition not in self.transitions:
+        if transition.get_index() not in self.transitions:
             self.transitions[transition.get_index()] = transition
         else:
             warnings.warn("{} already existing as transition for {}".format(transition, self), UserWarning)
