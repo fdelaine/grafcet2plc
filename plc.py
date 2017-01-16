@@ -158,9 +158,11 @@ class Simatic_S7_200(Plc):
         for step in steps[1:]:
             code += "A {}\n".format(step.get_plc_index())
 
-        code += self.convert_expression(transition.get_condition())
+        expressionConverted = self.convert_expression(transition.get_condition())
 
-        code += "ALD\n"
+        if expressionConverted is not '':
+            code += expressionConverted + "ALD\n"
+
         code += "= {}\n".format(transition.get_plc_index())
 
         return code
@@ -260,6 +262,22 @@ class Simatic_S7_200(Plc):
 
     def simplify_code(self, code):
 
-        # TODO: to implement
+        codeSimplified = str()
+        codeLines = code.splitlines(True)
+        indexes = iter(range(len(codeLines)))
 
-        return code
+        for index in indexes:
+            print(index)
+            if codeLines[index][0:2] == 'LD':
+                if codeLines[index+1][0:3] == 'ALD':
+                    codeSimplified += codeLines[index].replace('LD', 'A')
+                    next(indexes)
+                elif codeLines[index+1][0:3] == 'OLD':
+                    codeSimplified += codeLines[index].replace('LD', 'O')
+                    next(indexes)
+                else:
+                    codeSimplified += codeLines[index]
+            else:
+                codeSimplified += codeLines[index]
+
+        return codeSimplified
