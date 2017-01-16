@@ -239,21 +239,21 @@ class Simatic_S7_200(Plc):
         elif grafcet.get_plc_reset().get_plc_index() is None:
             return False
 
-        for step in steps:
-            if step.get_plc_index() is None:
+        for key in steps:
+            if steps[key].get_plc_index() is None:
                 # TODO: add error handler
                 return False
 
-        for transition in transitions:
-            if transition.get_plc_index() is None:
+        for key in transitions:
+            if transitions[key].get_plc_index() is None:
                 return False
 
-        for input in inputs:
-            if input.get_plc_index() is None:
+        for key in inputs:
+            if inputs[key].get_plc_index() is None:
                 return False
 
-        for output in outputs:
-            if output.get_plc_index() is None:
+        for key in outputs:
+            if outputs[key].get_plc_index() is None:
                 return False
 
         return True
