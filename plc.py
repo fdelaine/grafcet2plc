@@ -335,7 +335,6 @@ class Simatic_S7_200(Plc):
         indexes = iter(range(len(codeLines)))
 
         for index in indexes:
-            print(index)
             if codeLines[index][0:2] == 'LD':
                 if codeLines[index+1][0:3] == 'ALD':
                     codeSimplified += codeLines[index].replace('LD', 'A')
