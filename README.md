@@ -10,6 +10,11 @@ Usually, once you entered a GRAFCET with a dedicated edition software for analys
 
 It is currently developped for an old version of CADEPA and a Siemens Simatic S7-200.
 
+## Standards
+This software aims to respect the NF EN 60848 which defines the GRAFCET. Currently, some properties are not defined in grafcet.py but it is planned for a future realease. I had no time to check on some aspects of CADEPA, which does not support some properties of GRAFCETs.
+
+A project is to implement the outputs defined by the CEI 61131-3 standard.
+
 ## How to generate PLC code with an export from an edition software
 The file grafcet2plc.py gives an example of how to perform that. No script is available yet to select an input and an output format and to do the operation as only one input format and one output exist. (In fact I've been a bit lazy).
 
