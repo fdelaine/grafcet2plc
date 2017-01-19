@@ -3,9 +3,26 @@
 
 """grafcet.py"""
 
+import sys
 import warnings
 import csv
 from functools import partial
+
+
+class Error(Exception):
+    """Base class for exceptions in this module."""
+    pass
+
+
+class ExpressionIdentifierError(Error):
+    """Exception raised for unknown expression identifier.
+
+    Attributes:
+        type -- concerned type
+    """
+
+    def __init__(self, type):
+        self.type = type
 
 
 class Grafcet:
@@ -124,49 +141,56 @@ class Grafcet:
         return Expression(self.preprocess_expression(rawExpression))
 
     def preprocess_expression(self, rawExpression):
-        expression = list()
-        expression.append(rawExpression[0])
-        if rawExpression[0] == 'AND' or rawExpression[0] == 'OR':
-            members = list()
 
-            for member in rawExpression[1]:
-                members.append(self.preprocess_expression(member))
+        try:
+            expression = list()
+            expression.append(rawExpression[0])
+            if rawExpression[0] == 'AND' or rawExpression[0] == 'OR':
+                members = list()
 
-            expression.append(members)
+                for member in rawExpression[1]:
+                    members.append(self.preprocess_expression(member))
 
-        elif rawExpression[0] == 'NOT' or rawExpression[0] == 'RE' or rawExpression[0] == 'FE':
-            expression.append(self.preprocess_expression(rawExpression[1]))
+                expression.append(members)
 
-        elif rawExpression[0] == 'CT':
-            expression.append(rawExpression[1])
+            elif rawExpression[0] == 'NOT' or rawExpression[0] == 'RE' or rawExpression[0] == 'FE':
+                expression.append(self.preprocess_expression(rawExpression[1]))
 
-        elif rawExpression[0] == 'DE' or rawExpression[0] == 'DU':
-            subexpression = [rawExpression[1][0]]
-            subexpression.append(self.preprocess_expression(rawExpression[1][1]))
-            subexpression.append(0)
-            expression.append(subexpression)
-            # TODO: add other cases
+            elif rawExpression[0] == 'CT':
+                expression.append(rawExpression[1])
 
-        elif rawExpression[0] == 'IN':
-            if rawExpression[1] not in self.inputs.keys():
-                self.inputs[rawExpression[1]] = Input(rawExpression[1])
+            elif rawExpression[0] == 'DE' or rawExpression[0] == 'DU':
+                subexpression = [rawExpression[1][0]]
+                subexpression.append(self.preprocess_expression(rawExpression[1][1]))
+                subexpression.append(0)
+                expression.append(subexpression)
+                # TODO: add other cases
 
-            expression.append(self.inputs[rawExpression[1]])
+            elif rawExpression[0] == 'IN':
+                if rawExpression[1] not in self.inputs.keys():
+                    self.inputs[rawExpression[1]] = Input(rawExpression[1])
 
-        elif rawExpression[0] == 'OU':
-            if rawExpression[1] not in self.outputs.keys():
-                self.outputs[rawExpression[1]] = Output(rawExpression[1])
-            expression.append(self.outputs[rawExpression[1]])
+                expression.append(self.inputs[rawExpression[1]])
 
-        elif rawExpression[0] == 'ST':
-            if rawExpression[1] not in self.steps.keys():
-                self.steps[rawExpression[1]] = Step(rawExpression[1])
-            expression.append(self.steps[rawExpression[1]])
+            elif rawExpression[0] == 'OU':
+                if rawExpression[1] not in self.outputs.keys():
+                    self.outputs[rawExpression[1]] = Output(rawExpression[1])
+                expression.append(self.outputs[rawExpression[1]])
 
-        else:
-            print("unknown expression identifier", rawExpression)
+            elif rawExpression[0] == 'ST':
+                if rawExpression[1] not in self.steps.keys():
+                    self.steps[rawExpression[1]] = Step(rawExpression[1])
+                expression.append(self.steps[rawExpression[1]])
 
-        return expression
+            else:
+                raise ExpressionIdentifierError(rawExpression[0])
+
+            return expression
+
+        except ExpressionIdentifierError as err:
+            print("{} is an unknown expression identifier".format(err.type))
+        finally:
+            sys.exit(1)
 
     def get_inputs(self):
         return self.inputs
