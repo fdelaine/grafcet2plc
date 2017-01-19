@@ -3,7 +3,47 @@
 
 """plc.py"""
 
+import sys
+import warnings
+
 from grafcet import *
+
+
+class Error(Exception):
+    """Base class for exceptions in this module."""
+    pass
+
+
+class TimerError(Error):
+    """Exception raised for index overflow of timers.
+
+    Attributes:
+        baseType -- concerned type
+    """
+
+    def __init__(self, baseType):
+        self.baseType = baseType
+
+
+class PlcIndexError(Error):
+    """Exception raised for missing plc indexes.
+
+    Attributes:
+        object -- object concerned
+    """
+
+    def __init__(self, object):
+        self.object = object
+
+class PlcResetError(Error):
+    """Exception raised for missing plc reset information.
+
+    Attributes:
+        object -- object concerned
+    """
+
+    def __init__(self, object):
+        self.object = object
 
 
 class Plc:
@@ -33,85 +73,110 @@ class Simatic_S7_200(Plc):
 
         expression = expression.get_expression()
 
-        if type(expression) is ExpressionBinary:
-            code += self.convert_expression_binary(expression)
+        try:
+            if type(expression) is ExpressionBinary:
+                code += self.convert_expression_binary(expression)
 
-        elif type(expression) is ExpressionUnary:
-            code += self.convert_expression_unary(expression)
+            elif type(expression) is ExpressionUnary:
+                code += self.convert_expression_unary(expression)
 
-        elif type(expression) is Input:
-            code += 'LD ' + expression.get_plc_index() + '\n'
+            elif type(expression) is Input:
+                code += 'LD ' + expression.get_plc_index() + '\n'
 
-        elif type(expression) is Step:
-            code += 'LD ' + expression.get_plc_index() + '\n'
+            elif type(expression) is Step:
+                code += 'LD ' + expression.get_plc_index() + '\n'
 
-        elif type(expression) is Delay:
-            if expression not in self.delayCodes.keys():
-                self.convert_delay(expression)
-            code += 'LD ' + 'T' + str(self.delayPlcIndexes[expression]) + '\n'
+            elif type(expression) is Delay:
+                if expression not in self.delayCodes.keys():
+                    self.convert_delay(expression)
+                code += 'LD ' + 'T' + str(self.delayPlcIndexes[expression]) + '\n'
 
-        elif type(expression) is Constant:
-            if expression.get_value() is 1:
-                pass  # TODO: Manage values
+            elif type(expression) is Constant:
+                if expression.get_value() is 1:
+                    pass  # TODO: Manage values
+            else:
+                raise TypeError("{} conversion in expression is not managed".format(type(expression)))
 
-        return code
+            return code
+        except TypeError:
+            sys.exit(1)  # TODO: Be nicer here
 
     def convert_expression_binary(self, expression):
         code = str()
         typeConversion = {'AND': 'ALD', 'OR': 'OLD'}
 
-        type = typeConversion[expression.get_type()]
-        members = expression.get_members()
+        try:
+            assert expression.get_type() in typeConversion.keys()
+            type = typeConversion[expression.get_type()]
+            members = expression.get_members()
 
-        for member in members:
-            code += self.convert_expression(member)
+            for member in members:
+                code += self.convert_expression(member)
 
-            if member is not members[0]:
-                code += type + '\n'
+                if member is not members[0]:
+                    code += type + '\n'
 
-        return code
+            return code
+        except AssertionError:
+            print("Expression type is not known for binary expressions")
+            sys.exit(1)  # TODO: Be nicer here
 
     def convert_expression_unary(self, expression):
         code = self.convert_expression(expression.get_member())
 
+        typesConversion = {'NOT': 'NOT\n', 'RE': 'EU\n', 'FE': 'ED\n'}
+
         type = expression.get_type()
 
-        if type == 'NOT':
-            code += 'NOT\n'
+        try:
+            assert type in typesConversion.keys()
+            code += typesConversion[type]
+            return code
 
-        elif type == 'RE':
-            code += 'EU\n'
-
-        elif type == 'FE':
-            code += 'ED\n'
-
-        return code
+        except AssertionError:
+            print("Expression type is not known for unary expressions")
+            sys.exit(1)  # TODO: Be nicer here
 
     def convert_delay(self, delay):
 
         delay_re = delay.get_delay_re()
+        delay_fe = delay.get_delay_fe()
 
-        # TODO: add warning if delay_fe is not 0
-        if delay_re < self.delayTimeBases[0]:
-            # TODO: add error
-            pass
-        elif delay_re < self.delayTimeBases[1]:
-            timeBase = 0
-        elif delay_re < self.delayTimeBases[2]:
-            timeBase = 1
-        else:
-            timeBase = 2
+        try:
+            if delay_fe != 0:
+                warnings.warn("Falling edge delay of {} is not null."
+                              " Currently falling edge conversion is not implemented. Issues may occur".format(delay))
+                # TODO: manage delays with FE
+            assert delay_re > self.delayTimeBases[0]
 
-        # TODO: add error handler for index overflow
-        duration = round(delay_re / self.delayTimeBases[timeBase])
-        index = self.delayIndexes[self.delayTimeBases[timeBase]][self.delayIndexesCounters[self.delayTimeBases[timeBase]]]
-        self.delayIndexesCounters[self.delayTimeBases[timeBase]] += 1
+            if delay_re < self.delayTimeBases[1]:
+                timeBase = 0
+            elif delay_re < self.delayTimeBases[2]:
+                timeBase = 1
+            else:
+                timeBase = 2
 
-        code = self.convert_expression(delay.get_expression())
-        code += "TON T{}, {}\n".format(index, duration)
+            duration = round(delay_re / self.delayTimeBases[timeBase])
 
-        self.delayCodes[delay] = code
-        self.delayPlcIndexes[delay] = index
+            if self.delayIndexesCounters[self.delayTimeBases[timeBase]] > len(self.delayIndexes[self.delayTimeBases[timeBase]]):
+                raise TimerError(timeBase)
+
+            index = self.delayIndexes[self.delayTimeBases[timeBase]][self.delayIndexesCounters[self.delayTimeBases[timeBase]]]
+
+            self.delayIndexesCounters[self.delayTimeBases[timeBase]] += 1
+
+            code = self.convert_expression(delay.get_expression())
+            code += "TON T{}, {}\n".format(index, duration)
+
+            self.delayCodes[delay] = code
+            self.delayPlcIndexes[delay] = index
+
+        except AssertionError:
+            print("Rising edge delay is smaller than the smallest timer time base of the PLC")
+        except TimerError as err:
+            print("Index overflow for timer of base type {}".format(err.baseType))
+        finally:
+            sys.exit(1)  # TODO: Be nicer here
 
     def write_delays(self):
         code = str()
@@ -236,29 +301,37 @@ class Simatic_S7_200(Plc):
         inputs = grafcet.get_inputs()
         outputs = grafcet.get_outputs()
 
-        if grafcet.get_plc_reset() is None:
+        try:
+            if grafcet.get_plc_reset() is None:
+                raise PlcResetError(grafcet)
+
+            elif grafcet.get_plc_reset().get_plc_index() is None:
+                raise PlcIndexError(grafcet.get_plc_reset())
+
+            for key in steps:
+                if steps[key].get_plc_index() is None:
+                    raise PlcIndexError(steps[key])
+
+            for key in transitions:
+                if transitions[key].get_plc_index() is None:
+                    raise PlcIndexError(transitions[key])
+
+            for key in inputs:
+                if inputs[key].get_plc_index() is None:
+                    raise PlcIndexError(inputs[key])
+
+            for key in outputs:
+                if outputs[key].get_plc_index() is None:
+                    raise PlcIndexError(outputs[key])
+
+            return True
+
+        except PlcResetError as err:
+            print("Missing PLC reset information for {}".format(err.object))
+        except PlcIndexError as err:
+            print("Missing PLC index information for {}".format(err.object))
+        finally:
             return False
-        elif grafcet.get_plc_reset().get_plc_index() is None:
-            return False
-
-        for key in steps:
-            if steps[key].get_plc_index() is None:
-                # TODO: add error handler
-                return False
-
-        for key in transitions:
-            if transitions[key].get_plc_index() is None:
-                return False
-
-        for key in inputs:
-            if inputs[key].get_plc_index() is None:
-                return False
-
-        for key in outputs:
-            if outputs[key].get_plc_index() is None:
-                return False
-
-        return True
 
     def simplify_code(self, code):
 
