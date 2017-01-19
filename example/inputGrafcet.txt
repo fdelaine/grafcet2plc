@@ -1,0 +1,207 @@
+%DETAILS (X1, X6, X17, X32)
+X1 "Poste d'entrée  \
+(PE) vide"
+X2 [DA_lib_ent]
+X3
+X4 "Palette pleine  \
+au PE"
+X5 "Palette vide \
+au PE"
+X6 "Poste de contrôle  \
+(PC) vide et opérationnel"
+X7 [DA_lib_ent]
+X8 [DA_lib_ctl]
+X9
+X10 [DA_ind_ctl]
+X11 [DA_ind_ctl; \
+DA_voy_bleu; \
+DA_voy_jaune]
+X12 "Produit correct au PC"
+X13 [DA_lib_ent]
+X14 [DA_lib_ctl]
+X15
+X16 "Produit incorrect  \
+au PC"
+X17 "Poste de déchargement  \
+(PD) vide"
+X18 [DA_lib_ctl]
+X19 [DA_lib_eva]
+X20
+X21 [DA_ind_eva]
+X22 [DA_ind_eva]
+X23 [DA_lib_ctl]
+X24 [DA_lib_eva]
+X25
+X26 [DA_ind_eva]
+X27 [DA_ind_eva]
+X28 [DA_lib_ctl]
+X29 [DA_lib_eva]
+X30
+X31 [DA_lib_ctl]
+X32 "Système tapis (ST) à  \
+l'arrêt"
+X33 [DA_tou_aig_hor]
+X34
+X35 [DA_tou_aig_tri]
+X36
+X38 [DA_pla_prh_ind; \
+DA_ind_eva]
+X39 [DA_des_prh; \
+DA_ind_eva]
+X40 [DA_des_prh; \
+DA_aspirer; \
+DA_ind_eva]
+X41 [DA_aspirer; \
+DA_ind_eva]
+X42 [DA_pla_prh_tap; \
+DA_aspirer]
+X43 [DA_des_prh; \
+DA_aspirer]
+X44 [DA_des_prh]
+X45
+X46 [DA_ent_tap]
+Y1
+Y2 [I_pal_ent]
+Y3 [I_pla_pal.T/X3/5 d/]
+Y4 [/I_pla_pal.T/X3/5 d/]
+Y6
+Y7 [/I_pal_ent]
+Y8 [I_pal_ctl]
+Y9 [T/X9/5 d/]
+Y10 [T/X10/5 d/]
+Y11 [/I_bp_bleu.I_bp_jaune]
+Y12
+Y13 [/I_pal_ent]
+Y14 [I_pal_ctl]
+Y15 [I_bp_bleu./I_bp_jaune]
+Y17
+Y18 [/I_pal_ctl]
+Y19 [I_pal_eva]
+Y20 [T/X20/5 d/]
+Y21 [T/X21/5 d/]
+Y22 
+Y23 [/I_pal_ctl]
+Y24 [I_pal_eva]
+Y25 [T/X25/5 d/]
+Y26 [T/X26/5 d/]
+Y27 
+Y28 [/I_pal_ctl]
+Y29 [I_pal_eva]
+Y30 [T/X30/5 d/]
+Y31 [/I_pal_ctl]
+Y32 [X19+X20+X21+X22]
+Y33 [I_aig_hor]
+Y34 [X24+X25+X26+X27]
+Y35 [I_aig_tri]
+Y36 
+Y37 
+Y38 [I_prh_ind]
+Y39 [I_prh_bs]
+Y40 [T/X40/1 s/]
+Y41 [I_prh_ht]
+Y42 [I_prh_tap]
+Y43 [I_prh_bs]
+Y44 [T/X44/1 s/]
+Y45 [I_prh_ht]
+Y46 [T/X46/5 s/]
+X1 > Y1
+X2 > Y2
+X3 > Y3
+X3 > Y4
+X4 > Y6
+X5 > Y12
+X6 > Y6
+X6 > Y12
+X7 > Y7
+X8 > Y8
+X9 > Y9
+X10 > Y10
+X11 > Y11
+X11 > Y15
+X12 > Y17
+X13 > Y13
+X14 > Y14
+X15 > Y27
+X16 > Y22
+X17 > Y22
+X17 > Y17
+X17 > Y27
+X18 > Y18
+X19 > Y19
+X20 > Y20
+X21 > Y21
+X22 > Y36
+X23 > Y23
+X24 > Y24
+X25 > Y25
+X26 > Y26
+X27 > Y37
+X28 > Y28
+X29 > Y29
+X30 > Y30
+X31 > Y31
+X32 > Y32
+X32 > Y34
+X33 > Y33
+X34 > Y36
+X35 > Y35
+X36 > Y37
+X38 > Y38
+X39 > Y39
+X40 > Y40
+X41 > Y41
+X42 > Y42
+X43 > Y43
+X44 > Y44
+X45 > Y45
+X46 > Y46
+Y1 > X2
+Y2 > X3
+Y3 > X4
+Y4 > X5
+Y6 > X7
+Y7 > X8
+Y7 > X1
+Y8 > X9
+Y9 > X10
+Y10 > X11
+Y11 > X12
+Y12 > X13
+Y13 > X14
+Y13 > X1
+Y14 > X15
+Y15 > X16
+Y17 > X18
+Y18 > X19
+Y18 > X6
+Y19 > X20
+Y20 > X21
+Y21 > X22
+Y22 > X23
+Y23 > X24
+Y23 > X6
+Y24 > X25
+Y25 > X26
+Y26 > X27
+Y27 > X28
+Y28 > X29
+Y28 > X6
+Y29 > X30
+Y30 > X31
+Y31 > X17
+Y32 > X33
+Y33 > X34
+Y34 > X35
+Y35 > X36
+Y36 > X38
+Y37 > X38
+Y38 > X39
+Y39 > X40
+Y40 > X41
+Y41 > X42
+Y42 > X43
+Y43 > X44
+Y44 > X45
+Y45 > X46
+Y45 > X31
+Y46 > X32
