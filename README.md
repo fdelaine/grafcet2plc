@@ -11,19 +11,19 @@ Usually, once you entered a GRAFCET with a dedicated edition software for analys
 It is currently developped for an old version of CADEPA and a Siemens Simatic S7-200.
 
 ## How to generate PLC code with an export from an edition software
-*Under development*
+The file grafcet2plc.py gives an example of how to perform that. No script is available yet to select an input and an output format and to do the operation as only one input format and one output exist. (In fact I've been a bit lazy).
 
 ## My PLC is not available. What should I do?
-Code the class dumbass!
+Code the class dumbass! I won't do that for every PLC.
 
 ### How to add a PLC
-*Coming soon*
+Create a class on the model of plc.Simatic_S7-200 in plc.py.
 
 ## My input format is not available. What should I do?
-Again, code the class.
+Again, code it.
 
 ### How to add an input format
-*Coming soon*
+This time it is a class method in GrafcetParser that must be added. It is based on Simple Parser (http://www.cdsoft.fr/sp/) so use its documentation and the model for CADEPA.
 
 ## License
 Copyright (C) 2017  Florentin Delaine
