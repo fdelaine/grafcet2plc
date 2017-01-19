@@ -5,7 +5,6 @@
 
 import sys
 import warnings
-import csv
 from functools import partial
 
 
@@ -189,8 +188,7 @@ class Grafcet:
 
         except ExpressionIdentifierError as err:
             print("{} is an unknown expression identifier".format(err.type))
-        finally:
-            sys.exit(1)
+            sys.exit(1)  # TODO: Be nicer here
 
     def get_inputs(self):
         return self.inputs
@@ -198,50 +196,43 @@ class Grafcet:
     def get_outputs(self):
         return self.outputs
 
-    def import_plc_data(self):
+    def import_plc_data_inputs(self, content):
+        for row in content:
+            if row[0] not in self.inputs.keys():
+                input = Input(row[0], row[1])
+                self.inputs[input.get_name()] = input
+            else:
+                self.inputs[row[0]].set_plc_index(row[1])
 
-        with open('var/inputs.csv', newline='') as csvfile:
-            content = csv.reader(csvfile, delimiter=';', quotechar='"')
-            for row in content:
-                if row[0] not in self.inputs.keys():
-                    input = Input(row[0], row[1])
-                    self.inputs[input.get_name()] = input
-                else:
-                    self.inputs[row[0]].set_plc_index(row[1])
+    def import_plc_data_outputs(self, content):
+        for row in content:
+            if row[0] not in self.outputs.keys():
+                output = Output(row[0], row[1])
+                self.outputs[output.get_name()] = output
+            else:
+                self.outputs[row[0]].set_plc_index(row[1])
 
-        with open('var/outputs.csv', newline='') as csvfile:
-            content = csv.reader(csvfile, delimiter=';', quotechar='"')
-            for row in content:
-                if row[0] not in self.outputs.keys():
-                    output = Output(row[0], row[1])
-                    self.outputs[output.get_name()] = output
-                else:
-                    self.outputs[row[0]].set_plc_index(row[1])
+    def import_plc_data_steps(self, content):
+        for row in content:
+            if row[0][1:] not in self.steps.keys():
+                step = Step(row[0][1:], plcIndex=row[1])
+                self.steps[step.get_index()] = step
+            else:
+                self.steps[row[0][1:]].set_plc_index(row[1])
 
-        with open('var/steps.csv', newline='') as csvfile:
-            content = csv.reader(csvfile, delimiter=';', quotechar='"')
-            for row in content:
-                if row[0][1:] not in self.steps.keys():
-                    step = Step(row[0][1:], plcIndex=row[1])
-                    self.steps[step.get_index()] = step
-                else:
-                    self.steps[row[0][1:]].set_plc_index(row[1])
+    def import_plc_data_transitions(self, content):
+        for row in content:
+            if row[0][1:] not in self.transitions.keys():
+                transition = Transition(row[0][1:], plcIndex=row[1])
+                self.transitions[transition.get_index()] = transition
+            else:
+                self.transitions[row[0][1:]].set_plc_index(row[1])
 
-        with open('var/transitions.csv', newline='') as csvfile:
-            content = csv.reader(csvfile, delimiter=';', quotechar='"')
-            for row in content:
-                if row[0][1:] not in self.transitions.keys():
-                    transition = Transition(row[0][1:], plcIndex=row[1])
-                    self.transitions[transition.get_index()] = transition
-                else:
-                    self.transitions[row[0][1:]].set_plc_index(row[1])
-
-        with open('var/plcReset.csv', newline='') as csvfile:
-            content = csv.reader(csvfile, delimiter=';', quotechar='"')
-            for row in content:
-                if row[0][1:] not in self.transitions.keys():
-                    input = Input(row[0], row[1])
-                    self.plcReset = input
+    def import_plc_data_reset(self, content):
+        for row in content:
+            if row[0][1:] not in self.transitions.keys():
+                input = Input(row[0], row[1])
+                self.plcReset = input
 
 
 class Step:

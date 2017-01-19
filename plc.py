@@ -3,7 +3,6 @@
 
 """plc.py"""
 
-import sys
 import warnings
 
 from grafcet import *
@@ -98,8 +97,8 @@ class Simatic_S7_200(Plc):
                 raise TypeError("{} conversion in expression is not managed".format(type(expression)))
 
             return code
-        except TypeError:
-            sys.exit(1)  # TODO: Be nicer here
+        except TypeError as err:
+            print(err)
 
     def convert_expression_binary(self, expression):
         code = str()
@@ -119,7 +118,6 @@ class Simatic_S7_200(Plc):
             return code
         except AssertionError:
             print("Expression type is not known for binary expressions")
-            sys.exit(1)  # TODO: Be nicer here
 
     def convert_expression_unary(self, expression):
         code = self.convert_expression(expression.get_member())
@@ -135,7 +133,6 @@ class Simatic_S7_200(Plc):
 
         except AssertionError:
             print("Expression type is not known for unary expressions")
-            sys.exit(1)  # TODO: Be nicer here
 
     def convert_delay(self, delay):
 
@@ -175,8 +172,6 @@ class Simatic_S7_200(Plc):
             print("Rising edge delay is smaller than the smallest timer time base of the PLC")
         except TimerError as err:
             print("Index overflow for timer of base type {}".format(err.baseType))
-        finally:
-            sys.exit(1)  # TODO: Be nicer here
 
     def write_delays(self):
         code = str()
@@ -328,10 +323,10 @@ class Simatic_S7_200(Plc):
 
         except PlcResetError as err:
             print("Missing PLC reset information for {}".format(err.object))
+            sys.exit(1)  # TODO: Be nicer here
         except PlcIndexError as err:
             print("Missing PLC index information for {}".format(err.object))
-        finally:
-            return False
+            sys.exit(1)  # TODO: Be nicer here
 
     def simplify_code(self, code):
 
