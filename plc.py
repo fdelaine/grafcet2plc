@@ -194,9 +194,7 @@ class Simatic_S7_200(Plc):
             code += "O {}\n".format(transition.get_plc_index())
 
         if step.is_initial():
-            code += """LD {}
-            EU
-            OLD""".format(self.plcResetIndex)
+            code += "LD {}\nEU\nOLD\n".format(self.plcResetIndex)
 
         code += "LD {}\n".format(succeedingTransitions[0].get_plc_index())
         for transition in succeedingTransitions[1:]:

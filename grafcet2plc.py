@@ -11,7 +11,7 @@ from plc import *
 introduction = '''
 ================== grafcet2plc =======================
 
-This is a example of how to use this software.
+This is an example of how to use this software.
 
 It will use the files in the folder named "example".
 
